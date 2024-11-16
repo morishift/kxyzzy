@@ -7,6 +7,13 @@ Emacs っぽいテキストエディタのようなものです。
 現在は亀井氏に変わり有志によって開発が継続しています。
 
 
+## xyzzycliへの修正
+
+- xyzzycliプロジェクトファイルをVisual Studio 2022 へ変換した
+- xyzzycliプロジェクトを選択した右クリック>General>Platform Toolset を "Visual Studio 2022 (v143)"へ変更
+- xyzzycli.cc へ現在のデスクトップと同一のウィンドウで動作するxyzzyのみ前面に来るようにした
+
+
 ----
 
 ## xyzzy 0.2.2 系列とは

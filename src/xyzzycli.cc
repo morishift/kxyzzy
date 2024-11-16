@@ -1,5 +1,20 @@
+
+////////////////////////////////////////////
+// Windows10以上を対象とする
+// ExistsOnCurrentDesktop()を動作させるためにこの指定が必要になる(KTejinaのReadme参照)
+#define WINVER 0x0A00 
+#define _WIN32_WINNT 0x0A00
+////////////////////////////////////////////
+
 #include <windows.h>
+// 
+// GetWindowDesktopId()のため  
+// ウィンドウのデスクトップIDを取得する
+// https://learn.microsoft.com/ja-jp/windows/win32/api/shobjidl_core/nf-shobjidl_core-ivirtualdesktopmanager-getwindowdesktopid
+// 
+#include <ShObjIdl.h>
 #include <malloc.h>
+
 #include "xyzzycli.h"
 #include "listen.h"
 
@@ -9,6 +24,46 @@
 #define SPI_GETFOREGROUNDLOCKTIMEOUT 0x2000
 #define SPI_SETFOREGROUNDLOCKTIMEOUT 0x2001
 #endif
+
+//////////////////////
+// IServiceProvider
+const CLSID CLSID_ImmersiveShell = { 0xC2F03A33, 0x21F5, 0x47FA, 0xB4, 0xBB, 0x15, 0x63, 0x62, 0xA2, 0xF2, 0x39 };
+//////////////////////
+
+/// <summary>
+/// 現在のカレントデスクトップと同じデスクトップに存在する
+/// 別のバーチャルデスクトップに存在する場合はFALSE
+/// </summary>
+BOOL ExistsOnCurrentDesktop(HWND hwnd)
+{
+    IServiceProvider* pServiceProvider = NULL;
+    IVirtualDesktopManager* pDesktopManager = NULL;
+    BOOL bOnCurrentDesktop = FALSE;
+
+    // IServiceProviderの取得
+    HRESULT hResult = ::CoCreateInstance(CLSID_ImmersiveShell, NULL, CLSCTX_LOCAL_SERVER, __uuidof(IServiceProvider), (PVOID*)&pServiceProvider);
+    if (hResult != S_OK)
+    {        
+        return TRUE;
+    }
+
+    // IVirtualDesktopManagerの取得
+    // この行を正常にコンパイルするためには、Std.h に
+    hResult = pServiceProvider->QueryService(__uuidof(IVirtualDesktopManager), &pDesktopManager);
+    if (hResult != S_OK)
+    {
+        return TRUE;
+    }
+    // ウインドウがカレントのデスクトップにいるかを取得
+    pDesktopManager->IsWindowOnCurrentVirtualDesktop(hwnd, &bOnCurrentDesktop);
+    // IVirtualDesktopManager解放
+    pDesktopManager->Release();
+    // IServiceProvider解放
+    pServiceProvider->Release();
+
+    return bOnCurrentDesktop;
+}
+
 
 void
 ForceSetForegroundWindow (HWND hwnd)
@@ -152,6 +207,10 @@ struct lookup_server
 static BOOL CALLBACK
 enum_proc (HWND hwnd, LPARAM param)
 {
+  // ken カレントのデスクトップに存在しない場合は無視する
+  if (!ExistsOnCurrentDesktop(hwnd))
+    return 1;
+
   lookup_server *ls = (lookup_server *)param;
   HANDLE h = GetProp (hwnd, xyzzysrv_name);
   if (!h)
@@ -256,6 +315,11 @@ public:
 static int
 xmain (int argc, char **argv, const char *xyzzy, int multi_instance)
 {
+
+  // ken BOOL ExistsOnCurrentDesktop(HWND hwnd)の利用のために必要 
+  // COMの初期化
+  ::CoInitialize(NULL);
+
   MSG msg;
   PostQuitMessage (0);
   GetMessage (&msg, 0, 0, 0);
@@ -287,6 +351,10 @@ xmain (int argc, char **argv, const char *xyzzy, int multi_instance)
         if (i == RETRY_MAX)
           return error (IDS_CONNECT_FAILED);
       }
+
+    // ken BOOL ExistsOnCurrentDesktop(HWND hwnd)の利用のために必要 
+    // COMの終了
+    ::CoUninitialize();
   }
 
   int wait_ok = ls.hevent && WaitForSingleObject (ls.hevent, 60000) == WAIT_OBJECT_0;
