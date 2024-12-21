@@ -922,11 +922,14 @@ environ::save_geometry ()
   flush_conf ();
 }
 
+#undef environ
+
 lisp
 Fsi_environ ()
 {
   lisp r = Qnil;
-  for (char **e = environ; *e; e++)
+
+  for (char **e = _environ; *e; e++)
     {
       char *eq = strchr (*e, '=');
       if (!eq) continue;
@@ -934,7 +937,7 @@ Fsi_environ ()
                         make_string (eq + 1));
       r = xcons (env, r);
     }
-
+  
   return Fnreverse (r);
 }
 

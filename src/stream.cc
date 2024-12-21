@@ -1572,8 +1572,10 @@ listen_stream (lisp stream)
         case st_file_input:
           {
 #ifdef _MSC_VER
-            if (xfile_stream_input (stream)->_cnt > 0)
-              return 1;
+            abort();
+            // mken íœ
+            //if (xfile_stream_input (stream)->_cnt > 0)
+            //  return 1;
 #else
 # error "Not Supported"
 #endif
