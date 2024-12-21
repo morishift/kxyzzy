@@ -922,6 +922,7 @@ environ::save_geometry ()
   flush_conf ();
 }
 
+// ken èCê≥í«â¡
 #undef environ
 
 lisp
@@ -929,7 +930,8 @@ Fsi_environ ()
 {
   lisp r = Qnil;
 
-  for (char **e = _environ; *e; e++)
+  //for (char **e = environ; *e; e++)
+  for (char** e = _environ; *e; e++) // ken èCê≥
     {
       char *eq = strchr (*e, '=');
       if (!eq) continue;

@@ -777,7 +777,15 @@ toplevel_wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
               app.kbdq.putc (cc);
               return 0;
             }
+
+          if (wparam == VK_MENU) 
+          {
+              // ken 
+              // 処理を行わずにメニューをアクティブにしないようにする
+              return 0;
+          }
         }
+
       break;
 
     case WM_MENUCHAR:
